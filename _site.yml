@@ -1,0 +1,13 @@
+name: "My Website"
+navbar:
+  title: "annkiann.github"
+  left:
+    - text: "Home"
+      href: index.html
+    - text: "About"
+      href: about_me.html
+output:
+  html_document:
+    theme: cosmo
+    highlight: textmate
+    css: style_1.css

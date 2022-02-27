@@ -1,0 +1,30 @@
+---
+title: ""
+output: 
+  html_document:
+    df_print: paged
+    css: style_1.css
+---
+
+```{css, echo=FALSE}
+.columns {display: flex;}
+h1 {color: steelblue;}
+h2 {color: green;}
+h3 {color: brown;}
+```
+
+# Welcome To My Website!
+
+## About My Final Project
+
+This simple website is a part of my DATA 612 - Final Project Proposal. Despite of my initial proposal to create a website with Christmas decoration, I tried my best over these past few days but they did not work out as I expected. In additions, my R crashed everytime I setup new project with GitHub. Perhaps, it would take me over the winter break to figure out how to design a website with CSS in Rmarkdown. 
+
+Therefore, for submissions, I included all materials that I have generated for this project and made some adjustment on project execution below:
+
+1. Create quick and simple website with 2 main pages: **Home** and **About Me**
+
+2. Cluster Analysis on _Holiday Song Spotify_ dataset, retrieved from Data Action Lab website. Link: https://www.data-action-lab.com/2019/12/11/christmas-data-lab-datasets/
+
+3. Bonus visualization - Create a GIF giftcard using the dataset _Billboard Top 100 Christmas Carol_, retrieved from Kaggle. Link: https://www.kaggle.com/sharkbait1223/billboard-top-100-christmas-carol-dataset 
+
+* [Christmas Data Challenge](Content/Christmas_Final_Project.html)

@@ -1,0 +1,11 @@
+body {
+  background-image: url("https://t4.ftcdn.net/jpg/02/24/09/85/360_F_224098536_18gXUtjfAActKLwQO1o6ud8KXwJemNle.jpg");
+  background-repeat: no-repeat;
+  background-position: bottom right;
+  background-size: cover;
+}
+
+.columns {display: flex;}
+h1 {color: steelblue;}
+h2 {color: green;}
+h3 {color: brown;}

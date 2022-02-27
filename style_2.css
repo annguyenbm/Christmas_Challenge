@@ -1,0 +1,19 @@
+.user {
+  display: block;
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+
+  background-repeat: no-repeat;
+  background-position: center center;
+  background-size: cover;
+}
+
+.one {
+  background-image: url('meditate_on_rock.jpeg');
+}
+
+.columns {display: flex;}
+h1 {color: steelblue;}
+h2 {color: green;}
+h3 {color: brown;}

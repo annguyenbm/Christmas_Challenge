@@ -1,0 +1,415 @@
+---
+title: "Christmas + Data Analytics = Treasure Hunt"
+author: "Binh Minh An Nguyen"
+date: "12/14/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(ggplot2)
+library(gganimate)
+```
+
+```{css, echo=FALSE}
+.columns {display: flex;}
+h1 {color: steelblue;}
+h2 {color: green;}
+h3 {color: brown;}
+```
+
+## About the challenge
+
+While searching for cool Christmas gifts, I landed on the idea of creating unique gif image as a Christmas digital gift card. Nevertheless, designing a fancy gif is somewhat out of my current league. But attempting new creation is always my top interest. End up, I passed by some much fascinating plotting animation projects that inspire me to take on this challenge. These projects include:
+
+1. Animated Snow in R by _Ilya Kashnitsky_. Link: https://paulvanderlaken.com/2017/12/18/generate-snow-in-r/ 
+
+2. Christmas Tree with ggplot by _The Analytics Lab_. Link: https://www.theanalyticslab.nl/christmas-tree-with-ggplot/
+
+This challenge is part of my final project for course DATA 612 - Statistics Programming in R, Master of Science in Analytics programme at the American University. The motivation of this challenge is to explore unknown about the power of R while allow me to embrace the excitement of the Holidays season as much as possible.
+
+
+## Challenge Description
+
+Christmas is coming! Who else has not yet been plugging Christmas music to their ears?
+
+For this project, I will explore data visualizations given Christmas theme elements and attempt to generate possible animated plots by using two typical Christmas music datasets:
+
+1. _Holiday Song Spotify_, retrieved from the Data Action Lab's website. Link to dataset: https://www.data-action-lab.com/wp-content/uploads/2019/12/holiday_songs_spotify.csv
+
+Link to the Data Action Lab's website: https://www.data-action-lab.com/2019/12/11/christmas-data-lab-datasets/
+
+Data dictionary for this dataset can be access via a more advanced project _Is my Spotify music boring? An analysis involving music, data, and machine learning_ by Juan De Dios Santos. Link: https://towardsdatascience.com/is-my-spotify-music-boring-an-analysis-involving-music-data-and-machine-learning-47550ae931de
+
+
+2. _Billboard Top 100 Christmas Carol_, both original dataset and data dictionary can be retrieved from Kaggle: https://www.kaggle.com/sharkbait1223/billboard-top-100-christmas-carol-dataset
+
+
+## Data Overview
+
+### Holiday Song Spotify dataset
+
+Let's load the dataset to R
+
+```{r load-spotify-song}
+xmas_spotify <- read_csv("~/https:/github.com/annkiann/annguyenbm-annkiann.io.git/dataset/holiday_songs_spotify.csv")
+```
+
+This dataset involve 166 observations and 22 columns that contain the list of song names, the musical characteristics and attributes of each song, the playlist name, information about the album and artists.
+
+For this dataset, I am most interested in clustering the listed song into different groups based on their musical characteristics. Upon that, build up a radar chart for each type of music based on the centeroid values.
+
+
+### Billboard Top 100 Christmas Carols dataset
+
+Similarly, let's preview our dataset before diving into any analysis or visualizations:
+
+```{r load-billboard}
+billboard_100 <- read_csv("~/https:/github.com/annkiann/annguyenbm-annkiann.io.git/dataset/christmas_billboard_data.csv")
+
+length(unique(billboard_100$song))
+```
+
+This dataset involves 387 data points and 13 columns that display the artists, the song names and their ranking over the holidays seasons from 1958 to 2017. There are 70 unique song names in total. To illustrate how the ranking of these songs changed overtime, an animated bar plot will work the best.
+
+
+# Challenge Accepted!
+
+## Holiday Song Spotify
+
+Given a limited knowledge about music, for this dataset, I am only interested in those musical characteristic variables that contain numeric data. In particular, they are: danceability, energy, acousticness, instrumentalness, liveness, and valence.
+
+Even though `speechiness` and `tempo` also contain numeric values, we won't include these 2 variables in our analysis due to 2 reasons:
+
+```{r speechiness}
+max(xmas_spotify$speechiness)
+```
+
+1. This dataset is all about Christmas Carols. Thus, it is expected that our songs won't involve extreme wording arrangements. Speechiness scales from 0.0 to 1.0 and when it scales from about 0.66 to 1.0, the entire song are made up of all words (Rap genre). In fact, by checking the original dataset, the highest scale of `speechiness` is only about 0.4.
+
+2. `Tempo` is about the average number of beat per minute and this factor does not provide us much information about the music genre, since `tempo` can be changed/manipulated throughout different part of a song.
+
+```{r music-of-interest}
+xmas_spotify_interest <- xmas_spotify %>% 
+  select(column_a, track_name, artist_name, danceability, energy, 
+         acousticness, instrumentalness, liveness, valence) %>% 
+  rename(index = column_a)
+```
+
+The subset data involves an index column, song name, artist name, and 6 musical characteristic variables. All columns are filled with data. Thus, we don't need to worry about the constraints caused by missing values.
+
+### Cluster Analysis on Holiday Song Spotify
+
+For this project, I will apply what I have learnt about the k-mean clustering analysis during course **ITEC 620 - Business Insights to Analytics**, while using `ggplot2` to visualize the cluster result. 
+
+```{r packages, include=FALSE}
+library(cluster)
+```
+
+**Step 1** - Normalize the nummeric `<dbl>` values
+
+Since the musical characteristic variables are all double datatype, we can use k-mean clustering analysis. However, we would need to do data normalization prior to the clustering process.
+
+```{r normalization}
+xmas_spotify_cluster <- xmas_spotify_interest %>% 
+  select(4:9)
+# Normalize values to z-scores
+xmas_spotify_norm <- scale(xmas_spotify_cluster)
+
+# Make the results reproductive
+set.seed(12345)
+```
+
+
+**Step 2** - Select the most optimum value of k
+
+As the original dataset does not indicate the music genre, we will use the **key_mode** to decide the possible maximum number of kmeans. **key_mode** is like a song key signature, which indicates how a song ends; thus, it somewhat implies the mode of the entire song. So let's see how many distinct **key_mode** we have in this dataset:
+
+```{r}
+length(unique(xmas_spotify$key_mode))
+```
+
+However, **key_mode** is not the only conceptual system of how a song/melody is constructed, and not 100% of all songs follow this system. Therefore, even though the **key_mode** is indicated with 22 unique values as in the original dataset, it does not mean that 22 is the most optimum number of clusters.
+
+Thus, in this case, we will use the total number of **key_mode** as the maximum number of kmeans.
+
+```{r}
+gaps <- clusGap(xmas_spotify_norm,kmeans,22,d.power=2)
+plot(gaps$Tab[,"gap"])
+```
+Based on the gap plot, and by applying the elbow rules, we can see that `k=7` is the most optimum value.
+
+**Step 3** - Split our data to 7 groups with 7 centroids
+
+```{r}
+xmas_kmclusters <- kmeans(xmas_spotify_norm, 7, nstart=10)
+xmas_kmclusters$centers
+```
+
+**Step 4** - Convert values back to original units
+
+As at step 3, we have song features of 7 centroids in z-score normalized values. By using the `unscale()` function that was given in the **ITEC-620** class, we will be able to get the characteristic values in the original units.
+
+```{r}
+# Create unscale() function
+unscale <- function (vals, norm.data, col.ids)
+{
+  cols <- if (missing(col.ids))
+    1:NCOL(vals)
+  else col.ids
+  if (length(cols) != NCOL(vals))
+    stop("Incorrect dimension of data to unscale.")
+  centers <- attr(norm.data, "scaled:center")[cols]
+  scales <- attr(norm.data, "scaled:scale")[cols]
+  unvals <- scale(vals, center = (-centers/scales), scale = 1/scales)
+  attr(unvals, "scaled:center") <- attr(unvals, "scaled:scale") <- NULL
+  unvals
+}
+
+# Convert back to the initial units
+xmas_centroid <- unscale(xmas_kmclusters$centers, xmas_spotify_norm)
+xmas_centroid
+```
+
+**Step 6** - Comments on the results
+
+Overall, `valence` has some positive correlation with `danceability` except for Group 2. It's understandable that an upbeating song (high `valence` = positive mode) will normally be suitable for dancing. Besides, a live performance normally generate music with much energy (sound vibration created by the speakers) however, a high energy performance does not necessarily mean to be a live performance. Furthermore, in a live performance, music background seems not really matter.
+
+As I am not an art student, I name the clusters based on my best guess:
+
+Group 1 - **Live Performance**: Background music normally does not really matter. The track has a lot of noise and maybe suitable to dance along.
+
+Group 2 - **Instrumental Track**: Slow and gentle music, possibly a little bit gloomy; many types of instrument could be used and barely wordy; mostly is studio recorded; somewhat suitable to dance along - could be couple dance.
+
+Group 3 - **Choir Singing**: Slow and gentle; normally has vocals along with an orchestra.
+
+Group 4 - **Trending Pop**: Upbeating music, high danceability, high music energy due to the electric beats from (possibly) a keyboard, less instrumentalness.
+
+Group 5 - **Vocalize**: slow music constructed by single or multiple types of acoustic instruments and rhythming without words. This cluster most reminds me of a traditional Christmas song: _Silent Night_.
+
+Group 6 - **PopRock/Rock**: Energetic music with pretty much noise, positive mood, upbeating, and danceable.
+
+Group 7 - **80s-90s Pop**: low energy but uplifting melody, ear-catching to everyone makes most easy to dance along with. The 80s-90s pop music is made up of more acoustic instruments and mix of many instruments than the modern pop.
+ 
+```{r clusters}
+xmas_centroid_c <- as_tibble(xmas_centroid) %>% 
+  mutate(cluster = c("Live Performance", "Instrumental Track", "Choir Singing", "Trending Pop", "Vocalize", "PopRock/Rock", "80s-90s Pop")) %>% 
+  select(cluster, everything())
+xmas_centroid_c
+```
+
+
+**Step 7** - Visualization with radar chart
+
+We will use `ggradar2()` function with the extesion of `ggplot2:- ggradar2` package to handle our radar chart. `ggradar2` does inheir the aesthetic mapping feature of `ggplot`.
+
+```{r, include=FALSE}
+# install.packages("devtools")
+# devtools::install_github("xl0418/ggradar2",dependencies=TRUE)
+library(ggradar2)
+```
+
+This function will take the index row number column as the group name for each cluster. As a result, each polygon on our radar chart is named sequently from number 1 to number 7.
+
+```{r, fig.width=8, fig.height=5}
+xmas_radar <- ggradar2(xmas_centroid,
+    webtype = "lux",
+    group.line.width = 0.75,
+    group.point.size = 1.5,
+    grid.line.width = 0.2,
+    background.circle.colour = "white",
+    gridline.mid.colour = "grey",
+    base.size = 10,
+    label.gridline.mid = FALSE
+  ) +
+  theme(legend.position = "bottom") +
+  facet_wrap(vars(group))
+```
+
+```{r radar-facet}
+knitr::include_graphics("radar_facet.png")
+```
+
+And a stack radar chart version:
+
+```{r radar-png}
+knitr::include_graphics("radar_all.png")
+```
+
+Between these 2 version, the 7 facet charts show us how different features of each music cluster better.
+
+
+**Step 8** - Cluster Visualization
+
+To visualize the clusters, I will use the model that my team has developed for the course **ITEC 660 - Business Intelligence** - Group Project.
+
+1. First, we calculate the possible pairwise distance between 2 observations in our `xmas_spotify_cluster` dataset, by using `daisy` function under the `cluster` package. Since all variables are numeric and has the same scales of [0.0, 1.0], I set the `metric` argument as `"euclidean"`.
+
+2. We have already found out that 7 is the optimal number of clusters.
+
+3. Visualize the clusters.
+
+The disadvantage of our model is that points on our graph change every time we run the code chunk. In addition, this method using median values instead of mean to conduct clustering. 
+
+However, after testing several methods, below is the best version that I have so far for this exercise.
+
+**NOTE**: If you have a better idea of how to visualize the cluster, please suggest me. I very much appreciate!
+
+```{r}
+library(cluster)
+library(Rtsne)
+
+# Calculate pairwise distance
+dist <- daisy(xmas_spotify_cluster, metric = "euclidean", stand = TRUE)
+
+# Build the clusters
+pam_fit <- pam(dist, diss = TRUE, 7)
+pam_results <- xmas_spotify_cluster %>%
+  mutate(cluster = pam_fit$clustering) %>%
+  group_by(cluster) %>%
+  do(the_summary = summary(.))
+
+# Visualize the clusters
+tsne_obj <- Rtsne(dist, is_distance = TRUE)
+tsne_data <- tsne_obj$Y %>%
+  data.frame() %>%
+  setNames(c("X", "Y")) %>%
+  mutate(cluster = factor(pam_fit$clustering)) %>% 
+  ggplot(aes(x = X, y = Y)) +
+  geom_point(aes(color = cluster)) + 
+  theme(panel.background = element_rect(fill = NA)) + 
+  labs(colour = "Clusters") +
+  scale_colour_identity()
+
+# tsne_data
+# ggsave("clusters.png")
+```
+
+```{r cluster-visualization-result}
+knitr::include_graphics("clusters.png")
+```
+
+
+## BONUS - Billboard Top 100 Christmas Carols
+
+### A Shooting Stars Gift Card
+
+A data challenge here is calculating the total number of weeks that each individual song made up to the Billboard Top 100 ranking chart. Despite of the existing **weeks_on_chart** column, there was no explanation in the data dictionary on how the number of weeks were computed. Hence, in this case, we will rank the song popularity based on its frequency in our dataset. Since this dataset was order by a timeline, the higher frequency a song had, the more likely it was favoured over years.
+
+```{r}
+billboard_rank <- billboard_100 %>% 
+  group_by(song) %>% 
+  summarize(total_favourite_time = n())
+```
+
+
+Our primary visualization will be a vertical bar chart with 70 items on the x-coordinator. Before generating our first visualization, we will need to go through some data ETL, as per steps below:
+
+1. Fill the color of each bar by a gradient range from salmon to blue sky
+
+2. Customize the bar chart to hide the coordinators' name, values, and grid lines, and change the plot theme to black by using the `dark_theme_minimal()` function under the `ggdark` package.
+
+3. Reverse the plot upside-down
+
+```{r, include=FALSE}
+library(ggdark)
+
+#mid <- rep(billboard_rank$song, length(billboard_rank$total_favourite_time))
+gc <- billboard_rank %>% 
+  ggplot(aes(x = song, y = total_favourite_time, 
+           #  xend = song, yend = total_favourite_time,
+             fill = total_favourite_time)) +
+  geom_bar(stat = "identity", width = 0.5) +
+  scale_fill_gradient2(low = "#ff5050", mid = "white", high = "#00ccff", midpoint = 8.5) +
+  dark_theme_minimal() +
+  theme(
+    axis.text.x = element_text(size = rel(0.5), color = "black"),
+    axis.text.y = element_text(color = "black"),
+    legend.position = "none",
+    axis.title = element_blank(),
+    panel.grid.major = element_blank(), 
+    panel.grid.minor = element_blank(),
+    plot.title = element_text(size = 25, face = "bold", hjust = 0.5, vjust = 0.05),
+    plot.subtitle = element_text(size = 16,face = "italic", hjust = 0.5)
+  ) + 
+  scale_y_reverse() +
+  ggtitle(
+    "HOHOHO", 
+    subtitle = "Sing Me Your Wish Upon The Shooting Stars"
+  )
+
+#ggsave("none_animate_card.png")
+```
+
+Now our bar plot looks much like a digital gift card with a row of shooting star-lights.
+
+```{r}
+gc
+```
+
+
+**Let's make our gift card more eye-catching!**
+
+Firstly, we would like to see how the frequency of these song grew overtime. At each timestamp, the frequency is going to be accumulated from the previous year.
+
+```{r rank-by-year}
+billboard_rank_year <- billboard_100 %>% 
+  group_by(song, year) %>% 
+  mutate(total_favourite_time = n()) %>% 
+  distinct(year, song, total_favourite_time) %>% 
+  group_by(song) %>% 
+  mutate(cs = cumsum(total_favourite_time)) %>% 
+  select(year, song, cs)
+```
+
+Secondly, we union the `billboard_rank_year` data with the `billboard_rank` data above into 1 table. In order to do so, we need to add the **year** column to `billboard_rank` as both tibbles must have the same order of columns.
+
+```{r}
+billboard_rank_2 <- billboard_rank %>% 
+  mutate(year = 2018, cs = total_favourite_time) %>% 
+  select(year, song, cs)
+
+# Union 2 tables
+union_billboard <- rbind(billboard_rank_year, billboard_rank_2)
+```
+
+Finally, with the cumulative values of frequency, we will be able to see how the bar grew year-after-year. Given such new conditions, we will embed animation elements into our original plot.
+
+```{r}
+library(gifski)
+library(png)
+
+gc_anim <- union_billboard %>% 
+  ggplot(aes(x = song, y = cs, fill = cs)) +
+  geom_bar(stat = "identity", width = 0.5) +
+  scale_fill_gradient2(low = "#ff5050", mid = "white", high = "#00ccff", midpoint = 8.5) +
+  dark_theme_minimal() +
+  theme(
+    axis.text.x = element_text(size = rel(0.5), color = "black"),
+    axis.text.y = element_text(color = "black"),
+    legend.position = "none",
+    axis.title = element_blank(),
+    panel.grid.major = element_blank(), 
+    panel.grid.minor = element_blank(),
+    plot.title = element_text(size = 25, face = "bold", hjust = 0.5, vjust = 0.05),
+    plot.subtitle = element_text(size = 16,face = "italic", hjust = 0.5)
+  ) + 
+  scale_y_reverse() +
+  ggtitle(
+    "HOHOHO", 
+    subtitle = "Sing Me Your Wish Upon The Shooting Stars"
+  ) + 
+  transition_time(year) +
+  enter_fade() +
+  exit_shrink() +
+  ease_aes('sine-in-out')
+
+animated_gc <- animate(gc_anim, nframes = 300, fps = 25, end_pause = 30, renderer = gifski_renderer())
+
+#anim_save("gift_card.gif", animated_gc)
+
+animated_gc
+```
+
+

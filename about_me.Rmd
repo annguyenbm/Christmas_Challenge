@@ -1,0 +1,34 @@
+---
+title: "About Me"
+output: 
+  html_document:
+    css: style_2.css
+---
+
+```{css, echo=FALSE}
+.columns {display: flex;}
+h1 {color: steelblue;}
+h2 {color: green;}
+h3 {color: brown;}
+```
+
+- __Name__: **Binh Minh An Nguyen**
+
+But… please call me An or Minh An (/mi:ng a:n/). I did not intend to take any English name at first, and still have no plan in the future, even though there are bunches of funny stories about my name. When I came to the US, most of my Professors and classmates, who I barely talk to, usually call me as Binh. Not that bad, but Binh is actually my middle name. Question that I receive all time is that why did I place my middle name in front of my first name? Long story short, it is because of the complex name structure in Asia versus Westerner.
+
+- __Occupation__: currently 100% Full-time Student plus 30% on-campus Intern at the Data Quality team, Division of Development & Alumni Relations
+
+## Fun Facts
+
+My friends use to describe my career path is like a bunch of pasta with many types of toppings but none is meatballs. When I was a kid, I thought that I would become a historian or a religion researcher. My first book at the age of 8 was about the human being history of 5000 years. I fell in love with these historical books and always felt peace from within. However, life has always been unexpected rides. From a dream of becoming a historian, I ended up at a Business school in Singapore and almost settled my life with the Accounting professions.
+
+Nevertheless, my curiosity and adventurousness took over and drove me toward Data Science path, at which I feel much more freely to stay true to myself, interests, weirdness, and creativity. Getting a job in DS/DA might be a reward but not a real motivation. In fact, I am more in love with the journey of becoming who I am now and step-by-step to possibly be a Data Scientist in the future.
+
+
+## Other Interests
+
+Parallel and somewhat conflicting with the DS path, I am an intuitive person. But who can lean toward science only? Living intuitively is embracing feminine energy, while learning science represents the masculine side. In Taoism, a person only finds herself at peace when Yin is balanced with Yang, Yin within Yang, and Yang within Yin.
+
+I love meditation and meditation indeed changes my life. Outside of the classroom, I practice and develop energy healing, meditation guidance, art therapy, etc., research about the extra-terrestrial, and discuss on how to balance science against spirituality.
+
+If you are interested in these topics, I cannot wait to have a conversation with you. Otherwise, you can reach out to our AU Meditation Club instagram [@aumeditation](https://www.instagram.com/aumeditation/) for more events.
